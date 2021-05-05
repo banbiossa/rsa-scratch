@@ -8,6 +8,8 @@ authors = ["Shota Shimizu <shota.shimizu@quantumblack.com>"]
 python = "^3.9"
 jupyterlab = "^3.0"
 jedi = "<0.18"
+black = "*"
+blackcellmagic = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
