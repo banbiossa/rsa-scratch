@@ -1,3 +1,10 @@
+import logging
+from tqdm import tqdm
+import random
+
+logger = logging.getLogger(__name__)
+
+
 def prime_larger_than(x: int) -> int:
     """Find a prime stricly larger than x"""
     assert x > 0
@@ -53,3 +60,98 @@ def m_pow_e_mod_n(M: int, e: int, n: int) -> int:
             # C = C * M % n
             C = ((C % n) * (M % n)) % n
     return C
+
+
+def gcd(p, q):
+    """check the greatest common denominator, Euclid's algorithm"""
+    # make sure p > q
+    if p < q:
+        p, q = q, p
+    while True:
+        if p % q == 0:
+            return q
+        p, q = q, p % q
+
+
+def is_prime_solovay_and_strassen(b: int, num_trials: int = 10) -> bool:
+    """Solovay and Strassen algorithm to check for primeness
+    Solovay, R., and Strassen, V. A Fast Monte-Carlo test for primality. SIAM J.Comptng. (March 1977), 84-85
+
+    """
+    # test not even
+    assert b % 2 != 0
+
+    # check for a 100 times
+    for i in tqdm(range(num_trials)):
+        a = random.randint(3, b - 1)
+        logger.debug(f"{a=}")
+        # a shouldn't be even
+        if a % 2 == 0:
+            continue
+
+        # the check
+        logger.debug("gcd")
+        # a shouldn't be even
+        if gcd(a, b) != 1:
+            return False
+
+        # get the jacobi sign
+        logger.debug("jacobi")
+        _jacobi_mod_b = jacobi(a, b) % b
+
+        # calculate (a**(b-1)/2 % b)
+        logger.debug("a**(b-1)/2 % b")
+        _a_pow_half_b_mod_b = m_pow_e_mod_n(a, int((b - 1) / 2), b)
+
+        logger.debug(f"{_jacobi_mod_b=}, {_a_pow_half_b_mod_b=}")
+        if _jacobi_mod_b != _a_pow_half_b_mod_b:
+            return False
+    return True
+
+
+def jacobi(a, b):
+    """the jacobi subroutine, has a value in {-1, 1}"""
+    logger.debug(f"jacobi, {a=}, {b=}")
+    assert a <= b
+    assert b % 2 == 1
+    # a shouldn't be even
+    if a == 1:
+        return 1
+    if a % 2 == 0:
+        return jacobi(int(a / 2), b) * jacobi_sign_even(b)
+    return jacobi(b % a, a) * jacobi_sign_odd(a, b)
+
+
+def jacobi_sign_even(b):
+    """calculate -1 ** ((b**2 - 1)/8)
+    but without multiplication (because the results are too big)
+    """
+    part1 = (b + 1) / 2
+    part2 = (b - 1) / 2
+    # either part1 or part2 will be able to divide by 4
+    if part1 % 2 == 0:
+        part1 /= 2
+    else:
+        part2 /= 2
+
+    # check the sign of part1 * part2
+    if part1 % 2 == 0:
+        return 1
+    if part2 % 2 == 0:
+        return 1
+    return -1
+
+
+def jacobi_sign_odd(a, b):
+    """calculate (-1)**((a-1) * (b-1)/4)
+    but without multiplication (because the results are too big)
+    """
+    part1 = (a - 1) / 2
+    part2 = (b - 1) / 2
+
+    # check the sign of part1 * part2
+    if part1 % 2 == 0:
+        return 1
+    if part2 % 2 == 0:
+        return 1
+    return -1
